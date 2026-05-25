@@ -1,0 +1,16 @@
+D:\titan\Waterball\Facade\PrescriberSystem\bin\Debug\net8.0\patients.json
+D:\titan\Waterball\Facade\PrescriberSystem\bin\Debug\net8.0\diseases.txt
+D:\titan\Waterball\Facade\PrescriberSystem\bin\Debug\net8.0\PrescriberSystem.exe
+D:\titan\Waterball\Facade\PrescriberSystem\bin\Debug\net8.0\PrescriberSystem.deps.json
+D:\titan\Waterball\Facade\PrescriberSystem\bin\Debug\net8.0\PrescriberSystem.runtimeconfig.json
+D:\titan\Waterball\Facade\PrescriberSystem\bin\Debug\net8.0\PrescriberSystem.dll
+D:\titan\Waterball\Facade\PrescriberSystem\bin\Debug\net8.0\PrescriberSystem.pdb
+D:\titan\Waterball\Facade\PrescriberSystem\obj\Debug\net8.0\PrescriberSystem.GeneratedMSBuildEditorConfig.editorconfig
+D:\titan\Waterball\Facade\PrescriberSystem\obj\Debug\net8.0\PrescriberSystem.AssemblyInfoInputs.cache
+D:\titan\Waterball\Facade\PrescriberSystem\obj\Debug\net8.0\PrescriberSystem.AssemblyInfo.cs
+D:\titan\Waterball\Facade\PrescriberSystem\obj\Debug\net8.0\PrescriberSystem.csproj.CoreCompileInputs.cache
+D:\titan\Waterball\Facade\PrescriberSystem\obj\Debug\net8.0\PrescriberSystem.dll
+D:\titan\Waterball\Facade\PrescriberSystem\obj\Debug\net8.0\refint\PrescriberSystem.dll
+D:\titan\Waterball\Facade\PrescriberSystem\obj\Debug\net8.0\PrescriberSystem.pdb
+D:\titan\Waterball\Facade\PrescriberSystem\obj\Debug\net8.0\PrescriberSystem.genruntimeconfig.cache
+D:\titan\Waterball\Facade\PrescriberSystem\obj\Debug\net8.0\ref\PrescriberSystem.dll
