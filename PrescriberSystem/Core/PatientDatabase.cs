@@ -13,27 +13,20 @@ public class PatientDatabase
         var json = File.ReadAllText(jsonFilePath);
         var options = new JsonSerializerOptions
         {
-            PropertyNameCaseInsensitive = true,
-            Converters = { new JsonStringEnumConverter() }
+            PropertyNameCaseInsensitive = true
         };
-        _patients = JsonSerializer.Deserialize<List<Patient>>(json, options) ?? new List<Patient>();
+        options.Converters.Add(new JsonStringEnumConverter());
+        _patients = JsonSerializer.Deserialize<List<Patient>>(json, options) ?? [];
     }
 
     public Patient? SearchPatientById(string id) =>
         _patients.FirstOrDefault(p => p.Id == id);
 
-    public Patient? SearchPatientByName(string name) =>
-        _patients.FirstOrDefault(p => p.Name == name);
-
-    public void AddPatient(Patient patient) =>
-        _patients.Add(patient);
-
     public void SaveResult(Prescription prescription, PrescriptionDemand demand)
     {
         var patient = SearchPatientById(demand.PatientId);
-        if (patient == null) return;
 
-        patient.Cases.Add(new Case
+        patient?.Cases.Add(new Case
         {
             Symptoms = demand.Symptoms,
             Prescription = prescription,

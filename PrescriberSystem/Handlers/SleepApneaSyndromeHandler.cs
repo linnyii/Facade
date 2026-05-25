@@ -9,7 +9,7 @@ public class SleepApneaSyndromeHandler : PrescriptionHandler
         demand.Symptoms.Contains(Symptom.Snore);
 
     protected override Prescription CreatePrescription(PrescriptionDemand demand, Patient patient) =>
-        new Prescription
+        new()
         {
             Name = "打呼抑制劑",
             PotentialDisease = "SleepApneaSyndrome",
