@@ -1,0 +1,11 @@
+# Build output
+bin/
+obj/
+
+# Result files
+*.csv
+result_*.json
+
+# IDE
+.idea/
+*.user
