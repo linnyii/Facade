@@ -1,4 +1,5 @@
 using PrescriberSystem.Domain;
+using PrescriberSystem.Dto;
 
 namespace PrescriberSystem.Handlers;
 
@@ -9,7 +10,7 @@ public class CovidHandler : PrescriptionHandler
         demand.Symptoms.Contains(Symptom.Headache) &&
         demand.Symptoms.Contains(Symptom.Cough);
 
-    protected override Prescription CreatePrescription(PrescriptionDemand demand, Patient patient) =>
+    protected override Prescription CreatePrescription() =>
         new()
         {
             Name = "清冠一號",

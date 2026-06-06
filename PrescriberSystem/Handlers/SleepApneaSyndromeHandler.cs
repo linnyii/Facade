@@ -1,4 +1,5 @@
 using PrescriberSystem.Domain;
+using PrescriberSystem.Dto;
 
 namespace PrescriberSystem.Handlers;
 
@@ -8,7 +9,7 @@ public class SleepApneaSyndromeHandler : PrescriptionHandler
         patient.Bmi > 26 &&
         demand.Symptoms.Contains(Symptom.Snore);
 
-    protected override Prescription CreatePrescription(PrescriptionDemand demand, Patient patient) =>
+    protected override Prescription CreatePrescription() =>
         new()
         {
             Name = "打呼抑制劑",

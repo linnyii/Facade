@@ -9,11 +9,11 @@ public class PrescriberFacade
     private readonly Prescriber _prescriber;
     private readonly PatientDatabase _patientDatabase;
 
-    public PrescriberFacade(string patientJsonFile, string diseasesFile)
+    public PrescriberFacade(string patientsDataJsonFile, string supportDiseasesFile)
     {
-        _patientDatabase = new PatientDatabase(patientJsonFile);
-        var handlerChain = BuildHandlerChain(diseasesFile);
-        _prescriber = new Prescriber(_patientDatabase, handlerChain);
+        _patientDatabase = new PatientDatabase(patientsDataJsonFile);
+        var supportDiseasesHandlerChain = BuildHandlerChain(supportDiseasesFile);
+        _prescriber = new Prescriber(_patientDatabase, supportDiseasesHandlerChain);
     }
 
     public void Prescribe(string patientId, List<Symptom> symptoms, string outputFile, Format format)
@@ -27,6 +27,12 @@ public class PrescriberFacade
             saver.Save(prescription, d);
         });
     }
+
+    /// <summary>排空式關閉：把已排隊的診斷要求處理完才停。</summary>
+    public void Shutdown() => _prescriber.Shutdown();
+
+    /// <summary>立即取消：放棄排隊中與處理中的要求，盡快停止。</summary>
+    public void Cancel() => _prescriber.Cancel();
 
     private static PrescriptionHandler BuildHandlerChain(string diseasesFile)
     {

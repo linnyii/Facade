@@ -1,4 +1,5 @@
 using PrescriberSystem.Domain;
+using PrescriberSystem.Dto;
 
 namespace PrescriberSystem.Handlers;
 
@@ -8,7 +9,7 @@ public class AttractiveHandler : PrescriptionHandler
         patient is { Age: 18, Gender: Gender.Female } &&
         demand.Symptoms.Contains(Symptom.Sneeze);
 
-    protected override Prescription CreatePrescription(PrescriptionDemand demand, Patient patient) =>
+    protected override Prescription CreatePrescription() =>
         new()
         {
             Name = "青春抑制劑",

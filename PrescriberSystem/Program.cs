@@ -1,14 +1,14 @@
-﻿using PrescriberSystem.Core;
-using PrescriberSystem.Domain;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using PrescriberSystem.Core;
+using PrescriberSystem.Hosting;
 
-var facade = new PrescriberFacade("patients.json", "diseases.txt");
+var host = Host.CreateApplicationBuilder(args);
 
-facade.Prescribe("A123456789", [Symptom.Sneeze, Symptom.Headache, Symptom.Cough], "result_covid.json", Format.Json);
+// 註冊診斷服務（in-memory queue，單例）
+host.Services.AddSingleton(_ => new PrescriberFacade("patients.json", "diseases.txt"));
 
-facade.Prescribe("B987654321", [Symptom.Sneeze], "result_attractive.csv", Format.Csv);
+// 以 BackgroundService 形態託管，交由 Host 管理生命週期與關閉訊號（SIGTERM）
+host.Services.AddHostedService<PrescriberHostedService>();
 
-facade.Prescribe("C111222333", [Symptom.Snore], "result_sleep.json", Format.Json);
-
-Console.WriteLine("等待診斷完成中...");
-Thread.Sleep(12000);
-Console.WriteLine("所有診斷已完成。");
+await host.Build().RunAsync();

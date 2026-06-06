@@ -1,14 +1,17 @@
 using System.Collections.Concurrent;
 using PrescriberSystem.Domain;
+using PrescriberSystem.Dto;
 using PrescriberSystem.Handlers;
 
 namespace PrescriberSystem.Core;
 
-public class Prescriber
+public class Prescriber : IDisposable
 {
     private readonly PatientDatabase _patientDatabase;
     private readonly PrescriptionHandler _handlerChain;
     private readonly BlockingCollection<PendingDemand> _queue = new();
+    private readonly CancellationTokenSource _cancellation = new();
+    private readonly Task _worker;
 
     private record PendingDemand(PrescriptionDemand Demand, Action<Prescription, PrescriptionDemand> OnCompleted);
 
@@ -16,38 +19,133 @@ public class Prescriber
     {
         _patientDatabase = patientDatabase;
         _handlerChain = handlerChain;
-        Task.Run(ProcessQueue);
+        _worker = Task.Run(ProcessDemandQueue);
     }
 
     public void Prescribe(PrescriptionDemand demand, Action<Prescription, PrescriptionDemand> onCompleted)
     {
+        if (_queue.IsAddingCompleted)
+        {
+            Console.WriteLine($"[Prescriber] 已關閉，拒絕新的診斷要求：{demand.PatientId}");
+            return;
+        }
+
         _queue.Add(new PendingDemand(demand, onCompleted));
         Console.WriteLine($"[Prescriber] 診斷要求已加入排隊：{demand.PatientId}");
     }
 
-    private void ProcessQueue()
+    /// <summary>
+    /// 排空式關閉：不再接受新要求，但會把已排隊的要求全部處理完才結束。
+    /// </summary>
+    public void Shutdown()
     {
-        foreach (var pending in _queue.GetConsumingEnumerable())
+        Console.WriteLine("[Prescriber] 開始關閉：不再接受新要求，等待排隊中的診斷處理完畢……");
+        _queue.CompleteAdding();
+        _worker.Wait();
+    }
+
+    /// <summary>
+    /// 立即取消：放棄排隊中（與處理中）的要求，盡快停止背景處理。
+    /// </summary>
+    public void Cancel()
+    {
+        Console.WriteLine("[Prescriber] 要求立即取消……");
+        _cancellation.Cancel();
+        _queue.CompleteAdding();
+        _worker.Wait();
+    }
+
+    public void Dispose()
+    {
+        if (!_queue.IsAddingCompleted)
         {
-            Console.WriteLine($"[Prescriber] 開始診斷：{pending.Demand.PatientId}");
-            Thread.Sleep(3000);
+            Shutdown();
+        }
 
-            var patient = _patientDatabase.SearchPatientById(pending.Demand.PatientId);
-            if (patient == null)
+        _queue.Dispose();
+        _cancellation.Dispose();
+    }
+
+    private void ProcessDemandQueue()
+    {
+        try
+        {
+            foreach (var pending in _queue.GetConsumingEnumerable(_cancellation.Token))
             {
-                Console.WriteLine($"[Prescriber] 找不到病患：{pending.Demand.PatientId}");
-                continue;
-            }
+                try
+                {
+                    Console.WriteLine($"[Prescriber] 開始診斷：{pending.Demand.PatientId}");
+                    Task.Delay(3000, _cancellation.Token).Wait();
 
-            var prescription = _handlerChain.Handle(pending.Demand, patient);
-            if (prescription == null)
-            {
-                Console.WriteLine($"[Prescriber] 無法診斷：{pending.Demand.PatientId}，症狀不符合任何已知疾病");
-                continue;
-            }
+                    var patient = FindPatient(pending.Demand.PatientId);
+                    if (patient == null)
+                    {
+                        continue;
+                    }
 
-            Console.WriteLine($"[Prescriber] 診斷完成：{pending.Demand.PatientId}，處方：{prescription.Name}");
+                    var prescription = Diagnosing(pending.Demand, patient);
+                    if (prescription == null)
+                    {
+                        continue;
+                    }
+
+                    DiagnosedDoneAndNotifyToSaveResult(pending, prescription);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (AggregateException ex) when (ex.InnerException is OperationCanceledException)
+                {
+                    throw ex.InnerException;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Prescriber] 診斷 {pending.Demand.PatientId} 出錯：{ex.Message}");
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("[Prescriber] 已取消，停止處理排隊中的診斷要求。");
+        }
+
+        Console.WriteLine("[Prescriber] 背景處理迴圈已結束。");
+    }
+
+    private Prescription? Diagnosing(PrescriptionDemand demand, Patient patient)
+    {
+        var prescription = _handlerChain.Handle(demand, patient);
+        if (prescription == null)
+        {
+            Console.WriteLine($"[Prescriber] 無法診斷：{demand.PatientId}，症狀不符合任何已知疾病");
+            return null;
+        }
+
+        Console.WriteLine($"[Prescriber] 診斷完成：{demand.PatientId}，處方：{prescription.Name}");
+        return prescription;
+    }
+
+    private void DiagnosedDoneAndNotifyToSaveResult(PendingDemand pending, Prescription prescription)
+    {
+        try
+        {
             pending.OnCompleted(prescription, pending.Demand);
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Prescriber] OnCompleted callback 出錯：{pending.Demand.PatientId}，{ex.Message}");
+        }
+    }
+
+    private Patient? FindPatient(string patientId)
+    {
+        var patient = _patientDatabase.SearchPatientById(patientId);
+        if (patient == null)
+        {
+            Console.WriteLine($"[Prescriber] 找不到病患：{patientId}");
+        }
+
+        return patient;
     }
 }

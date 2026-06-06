@@ -1,14 +1,20 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PrescriberSystem.Domain;
+using PrescriberSystem.Dto;
 
 namespace PrescriberSystem.Core;
 
 public class PatientDatabase
 {
-    private readonly List<Patient> _patients;
+    private List<Patient> _patients;
 
     public PatientDatabase(string jsonFilePath)
+    {
+        InitPatientsDataBase(jsonFilePath);
+    }
+
+    private void InitPatientsDataBase(string jsonFilePath)
     {
         var json = File.ReadAllText(jsonFilePath);
         var options = new JsonSerializerOptions
