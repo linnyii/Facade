@@ -4,8 +4,15 @@ using PrescriberSystem.Savers;
 
 namespace PrescriberSystem.Core;
 
-public class PrescriberFacade
+public class PrescriberFacade : IDisposable
 {
+    private static readonly Dictionary<string, PrescriptionHandler> Handlers = new()
+    {
+        ["COVID-19"] = new CovidHandler(),
+        ["Attractive"] = new AttractiveHandler(),
+        ["SleepApneaSyndrome"] = new SleepApneaSyndromeHandler()
+    };
+
     private readonly Prescriber _prescriber;
     private readonly PatientDatabase _patientDatabase;
 
@@ -16,21 +23,21 @@ public class PrescriberFacade
         _prescriber = new Prescriber(_patientDatabase, supportDiseasesHandlerChain);
     }
 
-    public void Prescribe(string patientId, List<Symptom> symptoms, string outputFile, Format format)
+    public void Prescribe(string patientId, List<Symptom> symptoms, string outputFile, IPrescriptionResultSaver saver)
     {
-        var demand = new PrescriptionDemand(patientId, symptoms, outputFile, format);
+        var demand = new PrescriptionDemand(patientId, symptoms, outputFile, saver);
         _prescriber.Prescribe(demand, (prescription, d) =>
         {
             _patientDatabase.SaveResult(prescription, d);
-
-            IPrescriptionResultSaver saver = d.Format == Format.Json ? new JsonSaver() : new CsvSaver();
-            saver.Save(prescription, d);
+            d.Saver.Save(prescription, d);
         });
     }
 
-    public void Shutdown() => _prescriber.Shutdown();
+    //public void Shutdown() => _prescriber.Shutdown();
 
-    public void Cancel() => _prescriber.Cancel();
+    //public void Cancel() => _prescriber.Cancel();
+
+    public void Dispose() => _prescriber.Shutdown();
 
     private static PrescriptionHandler BuildHandlerChain(string diseasesFile)
     {
@@ -39,35 +46,24 @@ public class PrescriberFacade
             .Where(l => !string.IsNullOrEmpty(l))
             .ToList();
 
-        var handlers = new Dictionary<string, PrescriptionHandler>
-        {
-            ["COVID-19"] = new CovidHandler(),
-            ["Attractive"] = new AttractiveHandler(),
-            ["SleepApneaSyndrome"] = new SleepApneaSyndromeHandler()
-        };
+        var chain = diseases
+            .Where(Handlers.ContainsKey)
+            .Select(disease => Handlers[disease])
+            .ToList();
 
-        PrescriptionHandler? head = null;
-        PrescriptionHandler? tail = null;
-
-        foreach (var disease in diseases)
-        {
-            if (!handlers.TryGetValue(disease, out var handler)) continue;
-
-            if (head == null)
-            {
-                head = handler;
-                tail = handler;
-            }
-            else
-            {
-                tail!.SetNext(handler);
-                tail = handler;
-            }
-        }
-
-        if (head == null)
+        if (!HasAnyDiseaseHandler(chain))
             throw new InvalidOperationException("diseases 檔案中沒有任何合法的疾病名稱");
 
-        return head;
+        return DiseasesHandlerChain(chain);
+    }
+
+    private static bool HasAnyDiseaseHandler(List<PrescriptionHandler> chain) => chain.Count > 0;
+
+    private static PrescriptionHandler DiseasesHandlerChain(List<PrescriptionHandler> chain)
+    {
+        for (var i = 0; i < chain.Count - 1; i++)
+            chain[i].SetNext(chain[i + 1]);
+
+        return chain[0];
     }
 }
