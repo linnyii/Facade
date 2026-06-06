@@ -34,9 +34,6 @@ public class Prescriber : IDisposable
         Console.WriteLine($"[Prescriber] 診斷要求已加入排隊：{demand.PatientId}");
     }
 
-    /// <summary>
-    /// 排空式關閉：不再接受新要求，但會把已排隊的要求全部處理完才結束。
-    /// </summary>
     public void Shutdown()
     {
         Console.WriteLine("[Prescriber] 開始關閉：不再接受新要求，等待排隊中的診斷處理完畢……");
@@ -44,9 +41,6 @@ public class Prescriber : IDisposable
         _worker.Wait();
     }
 
-    /// <summary>
-    /// 立即取消：放棄排隊中（與處理中）的要求，盡快停止背景處理。
-    /// </summary>
     public void Cancel()
     {
         Console.WriteLine("[Prescriber] 要求立即取消……");

@@ -28,10 +28,8 @@ public class PrescriberFacade
         });
     }
 
-    /// <summary>排空式關閉：把已排隊的診斷要求處理完才停。</summary>
     public void Shutdown() => _prescriber.Shutdown();
 
-    /// <summary>立即取消：放棄排隊中與處理中的要求，盡快停止。</summary>
     public void Cancel() => _prescriber.Cancel();
 
     private static PrescriptionHandler BuildHandlerChain(string diseasesFile)
