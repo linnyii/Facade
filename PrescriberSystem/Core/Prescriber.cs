@@ -85,23 +85,15 @@ public class Prescriber : IDisposable
 
                     DiagnosedDoneAndNotifyToSaveResult(pending, prescription);
                 }
-                catch (OperationCanceledException)
-                {
-                    throw;
-                }
-                catch (AggregateException ex) when (ex.InnerException is OperationCanceledException)
-                {
-                    throw ex.InnerException;
-                }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"[Prescriber] 診斷 {pending.Demand.PatientId} 出錯：{ex.Message}");
                 }
             }
         }
-        catch (OperationCanceledException)
+        catch (Exception ex)
         {
-            Console.WriteLine("[Prescriber] 已取消，停止處理排隊中的診斷要求。");
+            Console.WriteLine($"[Prescriber] 已取消，停止處理排隊中的診斷要求。{ex.Message}");
         }
 
         Console.WriteLine("[Prescriber] 背景處理迴圈已結束。");

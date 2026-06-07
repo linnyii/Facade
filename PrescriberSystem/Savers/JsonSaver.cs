@@ -14,7 +14,7 @@ public class JsonSaver : IPrescriptionResultSaver
             prescription = new
             {
                 name = prescription.Name,
-                potentialDisease = prescription.PotentialDisease,
+                potentialDisease = prescription.PotentialDisease.ToString(),
                 medicines = prescription.Medicines,
                 usage = prescription.Usage
             }

@@ -6,7 +6,7 @@ namespace PrescriberSystem.Core;
 
 public class PrescriberFacade : IDisposable
 {
-    private static readonly Dictionary<string, PrescriptionHandler> Handlers = new()
+    private static readonly Dictionary<string, PrescriptionHandler> SupportedDiseasesHandlers = new()
     {
         ["COVID-19"] = new CovidHandler(),
         ["Attractive"] = new AttractiveHandler(),
@@ -19,7 +19,7 @@ public class PrescriberFacade : IDisposable
     public PrescriberFacade(string patientsDataJsonFile, string supportDiseasesFile)
     {
         _patientDatabase = new PatientDatabase(patientsDataJsonFile);
-        var supportDiseasesHandlerChain = BuildHandlerChain(supportDiseasesFile);
+        var supportDiseasesHandlerChain = BuildDiseaseHandlerChain(supportDiseasesFile);
         _prescriber = new Prescriber(_patientDatabase, supportDiseasesHandlerChain);
     }
 
@@ -32,14 +32,10 @@ public class PrescriberFacade : IDisposable
             d.Saver.Save(prescription, d);
         });
     }
+    
+    public void Dispose() => _prescriber.Dispose();
 
-    //public void Shutdown() => _prescriber.Shutdown();
-
-    //public void Cancel() => _prescriber.Cancel();
-
-    public void Dispose() => _prescriber.Shutdown();
-
-    private static PrescriptionHandler BuildHandlerChain(string diseasesFile)
+    private static PrescriptionHandler BuildDiseaseHandlerChain(string diseasesFile)
     {
         var diseases = File.ReadAllLines(diseasesFile)
             .Select(l => l.Trim())
@@ -47,8 +43,8 @@ public class PrescriberFacade : IDisposable
             .ToList();
 
         var chain = diseases
-            .Where(Handlers.ContainsKey)
-            .Select(disease => Handlers[disease])
+            .Where(SupportedDiseasesHandlers.ContainsKey)
+            .Select(disease => SupportedDiseasesHandlers[disease])
             .ToList();
 
         if (!HasAnyDiseaseHandler(chain))

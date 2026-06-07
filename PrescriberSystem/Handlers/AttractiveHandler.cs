@@ -13,7 +13,7 @@ public class AttractiveHandler : PrescriptionHandler
         new()
         {
             Name = "青春抑制劑",
-            PotentialDisease = "Attractive",
+            PotentialDisease = PotentialDisease.Attractive,
             Medicines = ["假鬢角", "臭味"],
             Usage = "把假鬢角黏在臉的兩側，讓自己異性緣差一點，自然就不會有人想妳了。"
         };

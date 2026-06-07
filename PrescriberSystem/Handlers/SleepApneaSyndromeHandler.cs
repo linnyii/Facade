@@ -13,7 +13,7 @@ public class SleepApneaSyndromeHandler : PrescriptionHandler
         new()
         {
             Name = "打呼抑制劑",
-            PotentialDisease = "SleepApneaSyndrome",
+            PotentialDisease = PotentialDisease.SleepApneaSyndrome,
             Medicines = new List<string> { "一捲膠帶" },
             Usage = "睡覺時，撕下兩塊膠帶，將兩塊膠帶交錯黏在關閉的嘴巴上，就不會打呼了。"
         };
